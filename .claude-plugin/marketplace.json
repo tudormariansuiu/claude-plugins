@@ -1,0 +1,14 @@
+{
+  "name": "tudor-plugins",
+  "description": "Claude Code plugins for tracking and sharing AI usage in our GitLab workflow.",
+  "owner": {
+    "name": "Tudor Suiu"
+  },
+  "plugins": [
+    {
+      "name": "mr-ai-cost",
+      "source": "./plugins/mr-ai-cost",
+      "description": "Records the Claude Code token usage and API-equivalent cost of each git commit as git notes, and shows it as a footer on the GitLab merge request."
+    }
+  ]
+}
