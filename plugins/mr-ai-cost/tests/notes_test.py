@@ -35,8 +35,10 @@ ok(r[c1]['author'] == 'tudor@example.com', 'author email stored lower-cased')
 # 2. report writes nothing
 CALLS.append({'start': 3990, 'end': 4010, 'hashes': set(), 'bucket': bucket(4.0)})
 c4 = commit('me', 'c4', 4000); g('me', 'push', '-q')
-f, msg = m.process('me', 'origin', 'feat', 'main', write=False)
+f, msg = m.process('me', 'origin', 'feat', 'main', write=False, project_url='https://gl.example/g/p')
 ok(c4 not in notes_on_remote() and '$7.00' in f, 'report shows c4 in footer but writes no note')
+ok(f'| [{c1[:8]}](https://gl.example/g/p/-/commit/{c1}) |' in f and f'| [{c4[:8]}](https://gl.example/g/p/-/commit/{c4}) |' in f,
+   'footer links each 8-char sha to its commit page')
 
 # 3. teammate adds a commit; their run adds their note, keeps mine, and leaves c4 (mine) alone
 g(T, 'clone', '-q', 'remote.git', 'mate'); g('mate', 'config', 'user.email', 'mate@example.com'); g('mate', 'config', 'user.name', 'mate')

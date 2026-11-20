@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "mr-ai-cost",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Records the Claude Code token usage and API-equivalent cost of each git commit as git notes, and shows it as a footer on the GitLab merge request.",
   "author": { "name": "Tudor Suiu" }
 }

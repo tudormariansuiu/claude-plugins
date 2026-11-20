@@ -304,22 +304,23 @@ def short_model(m):
     return m.replace("claude-", "")
 
 
-def render(commits, notes):
+def render(commits, notes, project_url=None):
     rows, total, have, unpriced, waiting = [], _blank(), 0, set(), collections.Counter()
     for sha, _, _, subject, email in commits:
         n = notes.get(sha)
         subj = subject if len(subject) <= 50 else subject[:47] + "..."
         subj = subj.replace("|", "\\|")
+        ref = f"[{sha[:8]}]({project_url}/-/commit/{sha})" if project_url else sha[:8]
         if not n:
             waiting[email] += 1
-            rows.append(f"| `{sha[:7]}` | {subj} | - | - | - | - | - | - |")
+            rows.append(f"| {ref} | {subj} | - | - | - | - | - | - |")
             continue
         have += 1
         for k in (*TOKEN_FIELDS, "usd"):
             total[k] += n.get(k, 0)
         unpriced |= set(n.get("unpriced", []))
         models = ", ".join(short_model(m) for m in n.get("models", [])) or "-"
-        rows.append(f"| `{sha[:7]}` | {subj} | {models} | {human(n['input'])} | {human(n['output'])} "
+        rows.append(f"| {ref} | {subj} | {models} | {human(n['input'])} | {human(n['output'])} "
                     f"| {human(n['cache_w'])} | {human(n['cache_r'])} | ${n['usd']:.2f} |")
     tokens = sum(total[k] for k in TOKEN_FIELDS)
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -351,7 +352,7 @@ def splice(description, footer):
 
 # ---------- commands ----------
 
-def process(repo, remote, branch, target, write, rebuild=False):
+def process(repo, remote, branch, target, write, rebuild=False, project_url=None):
     """Everything for one MR except talking to GitLab. Returns (footer or None, message)."""
     me = sh(["git", "config", "user.email"], repo, check=False).lower()
     fetch_notes(repo, remote)
@@ -372,7 +373,7 @@ def process(repo, remote, branch, target, write, rebuild=False):
                 write_note(repo, sha, note)
     if write:
         push_notes(repo, remote)
-    footer = render(commits, notes)
+    footer = render(commits, notes, project_url)
     added = f"{len(new)} new note(s)" if write else f"would add {len(new)} note(s)"
     return footer, f"{footer.splitlines()[2]} · {added}"
 
@@ -385,7 +386,8 @@ def run(repo, branch, write, rebuild=False):
         return f"mr-ai-cost: no open MR for '{branch}', cost footer not written"
     remote, msgs = branch_remote(repo, branch), []
     for mr in mrs:
-        footer, msg = process(repo, remote, branch, mr["target_branch"], write, rebuild)
+        footer, msg = process(repo, remote, branch, mr["target_branch"], write, rebuild,
+                              mr["web_url"].split("/-/merge_requests/")[0])
         if footer is None:
             msgs.append(f"!{mr['iid']}: {msg}")
         elif not write:
